@@ -3,18 +3,19 @@ import os
 import subprocess 
 import ast
 
-def search_for_functions(file_path, function_names):
+def format_score(file_path):
     error_counter = 0 
-
+    function_names = ["parseInput", "executeCommand", "changeDirectories"]
+    
     with open(file_path, "r") as f:
         contents = f.read()
     
     for function_name in function_names:
         if f"{function_name}(" in contents:
-            print(f"Function '{function_name}' found in file ")
+            #print(f"Function '{function_name}' found in file ")
             error_counter = 0 
         else:
-            print(f"Function '{function_name}' not found in file")
+            #print(f"Function '{function_name}' not found in file")
             error_counter += 1
     
     if(error_counter == 0):
@@ -22,6 +23,15 @@ def search_for_functions(file_path, function_names):
     else:
         return 0
     
+    
+def main_behavor_score(file_path):
+    print(file_path)
+    subprocess.call(["gcc", "-o", "studentprogram", file_path])
+    process = subprocess.Popen(["./studentprogram"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    # # Provide input to the C program's standard input stream
+    # input_data = "input data\n"
+    # stdout, stderr = process.communicate(input=input_data.encode())
 
 def main (): 
     path = "PA1/Submissions"
@@ -29,29 +39,11 @@ def main ():
     #if path already exists then do nothing, otherwise test students grade 
     if not os.path.exists(path):
             
-        # Create an empty file 
-        try:
-            os.mkdir(path)
-        except OSError:
-            print ("Creation of the directory %s failed" % path)
-        else:
-            print ("Successfully created the directory %s " % path)
+      print("Need to download submissions folder")
 
     else: 
-
-        #unzip the file containing all student submissions zips and place them in the empty file 
-        zip_ref = zipfile.ZipFile("PA1/Archive.zip", 'r')
-        zip_ref.extractall("PA1/Submissions")
-        zip_ref.close()
-
-        #Unzip each student zip file
-        outer_path = "PA1/Submissions"
-        for filename in os.listdir(outer_path):
-            if filename.endswith(".zip"):
-                inner_zip = zipfile.ZipFile(os.path.join(outer_path, filename), 'r')
-                inner_zip.extractall(os.path.join(outer_path, filename[:-4]))
-                inner_zip.close()
-        grade_student(outer_path)
+        #run through the submissions and grade each student 
+        grade_student(path)
         
 
      
@@ -63,9 +55,12 @@ def grade_student(outer_path):
             file_path = os.path.join(subdir, file)
             if os.path.isfile(file_path) and file.endswith(".c"):
                 #once c file is found begin tests : 
-                function_names = ["parseInput", "executeCommand", "changeDirectories"]
+                
                 #check if functions exist in c file 
-                format_score = search_for_functions(file_path, function_names)
+                format_points = format_score(file_path)
+                # run the C program and pass the input data
+                main_points = main_behavor_score(file_path)
+                
     
 
 
