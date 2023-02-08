@@ -2,11 +2,13 @@ import zipfile
 import os
 import subprocess 
 import ast
+import csv
 
 def format_score(file_path):
     error_counter = 0 
     function_names = ["parseInput", "executeCommand", "changeDirectories"]
     
+ 
     with open(file_path, "r") as f:
         contents = f.read()
     
@@ -24,28 +26,36 @@ def format_score(file_path):
         return 0
     
     
-def main_behavor_score(file_path):
-    success = 0
-    print(file_path)
+def run_input(file_path, input_str, answer_list, exact_factor):
+
+   #compile student file 
     subprocess.call(["gcc", "-o", "studentprogram", file_path])
-    # Start the C program as a separate process
-    process = subprocess.Popen(['./studentprogram'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-    # List of commands to be run in the C program
-    commands = [
-        "ls",
-        "exit"
-    ]
+   # Run program
+    process = subprocess.Popen('./studentprogram', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
-    # Send the commands to the C program's standard input stream and get its outputs
-    for input_data in commands:
-        output = process.communicate(input=input_data.encode())[0].decode()
-        print(output)
+   # Send multiple commands to the C program
+    stdout, stderr = process.communicate(input_str.encode())
 
-    # Wait for the process to complete
-    process.wait()
+   # Remove example.c once created 
+    if os.path.exists("example.c"):
+        os.remove("example.c")
+        print("File successfully removed")
 
-    return success
+   # Make a list to store output in 
+    output_list = stdout.decode().split("\n")
+    
+   # Check if first 10 elements of list are equal to answer list 
+    if output_list[0:exact_factor] == answer_list[0:exact_factor]:
+        print("Lists are equal, program Success!")
+        return 10
+    else:
+        print("Lists are not equal, Something went wrong...")
+        return 0  
+    
+
+
+
 
     
 def main (): 
@@ -62,16 +72,14 @@ def main ():
         
 #obtain the student name ID 
 def Obtain_Student(file_path): 
-    #divide the string by the "\"'s 
-    split_string = file_path.split("\\")
 
     # access the second item in the resulting list
-    result = split_string[1]
+    name = file_path.split("/")[2]
 
-    return result
+    return name
 
 def grade_student(outer_path):
-
+    
     #points formatted 
     students = []
     formats = [] 
@@ -79,31 +87,40 @@ def grade_student(outer_path):
     directories = []
     main = []
 
+    student_count = 0
     #access c files within the directory of each students 
     for subdir, dirs, files in os.walk(outer_path):
+       # print(files)
         for file in files:
             file_path = os.path.join(subdir, file)
             if os.path.isfile(file_path) and file.endswith(".c"):
                 #get student id's 
-                students.append(Obtain_Student(file_path))
-                #get formatting score 
-                formats.append(format_score(file_path))
-                #get main function behavior score 
-                main.append(main_behavor_score(file_path))
-                #get execute command behavior score 
-                #commands.append(format_score(file_path))
-                #get directories behavior score 
-                #directories.append(format_score(file_path))
+                if (student_count < 90):
+                    students.append(Obtain_Student(file_path))
+                    #get formatting score 
+                    formats.append(format_score(file_path))
+                    #get main function behavior score 
+                    input_str = 'ls\ntouch example.c\nls\nexit\n'
+                    answer_list = "PA1\nPA2\nPA3\nPA4\nstudentprogram\nPA1\nPA2\nPA3\nPA4\nexample.c\n".split("\n")
+                    main.append(run_input(file_path, input_str, answer_list, 10))
+                    #get execute command behavior score 
+                    commands.append(20)
+                    #get directories behavior score 
+                    input_str = 'cd PA1\nls\nexit\n'
+                    answer_list = "Submissions\nauto.py".split("\n")
+                    directories.append(run_input(file_path, input_str, answer_list, 2))
+
+                student_count += 1 
              
-             
-    #write_results(students, formats, main, commands, directories)
+    print("Ran though [", student_count ,"] students...")      
+    write_results(students, formats, main, commands, directories)
                 
 def write_results(students, formats, main, commands, directories):
     # writing results to csv file
     with open('file.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Studens', 'Formating', 'Main', 'Commands', 'Directories', 'Total Grade'])
-        for i in range(len(str_list1)):
+        for i in range(len(students)):
             grade = formats[i] + main[i] + commands[i] + directories[i]
             writer.writerow([students[i], formats[i], main[i], commands[i], directories[i], grade])
 
