@@ -25,8 +25,9 @@ def format_score(file_path):
     else:
         return 0
     
+
     
-def run_input(file_path, input_str, answer_list, exact_factor):
+def run_input(file_path, input_str):
 
    #compile student file 
     subprocess.call(["gcc", "-o", "studentprogram", file_path])
@@ -37,25 +38,39 @@ def run_input(file_path, input_str, answer_list, exact_factor):
    # Send multiple commands to the C program
     stdout, stderr = process.communicate(input_str.encode())
 
+    return stdout, stderr
+
+def compare_test(stdout, stderr, answer_list, exact_factor):
    # Remove example.c once created 
     if os.path.exists("example.c"):
         os.remove("example.c")
-        print("File successfully removed")
+        #print("File successfully removed")
 
    # Make a list to store output in 
     output_list = stdout.decode().split("\n")
     
+    print(output_list)
+
+    while("" in output_list):
+        output_list.remove("")
+
+    output_string = str(stdout.decode()).lower()
+
+    #if (exact_factor == 2):
+    #    print(output_list, "==", answer_list)
    # Check if first 10 elements of list are equal to answer list 
-    if output_list[0:exact_factor] == answer_list[0:exact_factor]:
-        print("Lists are equal, program Success!")
-        return 10
-    else:
-        print("Lists are not equal, Something went wrong...")
-        return 0  
-    
+    # if output_list[0:exact_factor] == answer_list[0:exact_factor]:
+    #    # print("Lists are equal, program Success!")
+    #     return 10
+    # else:
+    #    # print("Lists are not equal, Something went wrong...")
+    #     return 0  
 
-
-
+    for elements in answer_list:
+        if not (elements in output_string):
+            return 0
+        
+    return 10 
 
     
 def main (): 
@@ -95,21 +110,40 @@ def grade_student(outer_path):
             file_path = os.path.join(subdir, file)
             if os.path.isfile(file_path) and file.endswith(".c"):
                 #get student id's 
-                if (student_count < 90):
+                if (Obtain_Student(file_path) == "NCarrero" or Obtain_Student(file_path) == "CRuelas446" or Obtain_Student(file_path) == "BettridgeKameron"):
                     students.append(Obtain_Student(file_path))
                     #get formatting score 
                     formats.append(format_score(file_path))
                     #get main function behavior score 
                     input_str = 'ls\ntouch example.c\nls\nexit\n'
                     answer_list = "PA1\nPA2\nPA3\nPA4\nstudentprogram\nPA1\nPA2\nPA3\nPA4\nexample.c\n".split("\n")
-                    main.append(run_input(file_path, input_str, answer_list, 10))
+                 
+                    stdout, stderr = run_input(file_path, input_str)
+                    main.append( compare_test(stdout, stderr ,  answer_list, 10))
+                    
                     #get execute command behavior score 
                     commands.append(20)
                     #get directories behavior score 
                     input_str = 'cd PA1\nls\nexit\n'
                     answer_list = "Submissions\nauto.py".split("\n")
-                    directories.append(run_input(file_path, input_str, answer_list, 2))
 
+                    stdout, stderr = run_input(file_path, input_str)
+                    directory_score = ( compare_test(stdout, stderr , answer_list, 2))
+
+                    #check if there is an error message 
+                    input_str = 'cd apple\nexit\n'
+                    stdout, stderr = run_input(file_path, input_str)
+                    output_list = str(stdout.decode()).lower()
+                 
+
+                    if not ("not found" in output_list or "chdir failed" in output_list):
+                        directories.append(directory_score - 2)
+                    else:
+                        if directory_score == 10:
+                            directories.append(directory_score)
+                        else:
+                            directories.append(2)
+                    
                 student_count += 1 
              
     print("Ran though [", student_count ,"] students...")      
