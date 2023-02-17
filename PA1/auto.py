@@ -29,45 +29,45 @@ def format_score(file_path):
     
 def run_input(file_path, input_str):
 
-   #compile student file 
+    #compile student file 
     subprocess.call(["gcc", "-o", "studentprogram", file_path])
 
-   # Run program
-    process = subprocess.Popen('./studentprogram', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    # Run program with a 10 second timeout
+    timeout_seconds = 10
+    command = ['./studentprogram']
 
-   # Send multiple commands to the C program
-    stdout, stderr = process.communicate(input_str.encode())
+    # Replace with the input string for the C program
+    try:
+        result = subprocess.run(command, input=input_str.encode(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=timeout_seconds, check=True)
+        # Process the output from the C program
+        stdout = result.stdout
+        return stdout
+    except subprocess.CalledProcessError as e:
+        if e.returncode == subprocess.TimeoutExpired:
+            result = None
+            
+     
 
-    return stdout, stderr
-
-def compare_test(stdout, stderr, answer_list, exact_factor):
+def compare_test(stdout, answer_list, exact_factor):
    # Remove example.c once created 
     if os.path.exists("example.c"):
         os.remove("example.c")
         #print("File successfully removed")
 
-   # Make a list to store output in 
+    if stdout is None:
+        print("\n\n Error: Command did not work\n\n")  
+        return 0
+    # Make a list to store output in 
     output_list = stdout.decode().split("\n")
     
-    print(output_list)
 
     while("" in output_list):
         output_list.remove("")
 
     output_string = str(stdout.decode()).lower()
 
-    #if (exact_factor == 2):
-    #    print(output_list, "==", answer_list)
-   # Check if first 10 elements of list are equal to answer list 
-    # if output_list[0:exact_factor] == answer_list[0:exact_factor]:
-    #    # print("Lists are equal, program Success!")
-    #     return 10
-    # else:
-    #    # print("Lists are not equal, Something went wrong...")
-    #     return 0  
-
     for elements in answer_list:
-        if not (elements in output_string):
+        if not (elements.lower() in output_string):
             return 0
         
     return 10 
@@ -101,62 +101,88 @@ def grade_student(outer_path):
     commands = []
     directories = []
     main = []
+    comments = []
+
 
     student_count = 0
     #access c files within the directory of each students 
     for subdir, dirs, files in os.walk(outer_path):
-       # print(files)
         for file in files:
             file_path = os.path.join(subdir, file)
             if os.path.isfile(file_path) and file.endswith(".c"):
                 #get student id's 
-                if (Obtain_Student(file_path) == "NCarrero" or Obtain_Student(file_path) == "CRuelas446" or Obtain_Student(file_path) == "BettridgeKameron"):
-                    students.append(Obtain_Student(file_path))
-                    #get formatting score 
-                    formats.append(format_score(file_path))
-                    #get main function behavior score 
-                    input_str = 'ls\ntouch example.c\nls\nexit\n'
-                    answer_list = "PA1\nPA2\nPA3\nPA4\nstudentprogram\nPA1\nPA2\nPA3\nPA4\nexample.c\n".split("\n")
-                 
-                    stdout, stderr = run_input(file_path, input_str)
-                    main.append( compare_test(stdout, stderr ,  answer_list, 10))
+                print(Obtain_Student(file_path))
+
+        
+                if(student_count < 9000):
+                    student_error = ''
+                    if(student_count != 23 and student_count != 34 and student_count != 54 and  student_count != 60):
+
+                        students.append(Obtain_Student(file_path))
+                        # get formatting score 
+                        formats.append(format_score(file_path))
                     
-                    #get execute command behavior score 
-                    commands.append(20)
-                    #get directories behavior score 
-                    input_str = 'cd PA1\nls\nexit\n'
-                    answer_list = "Submissions\nauto.py".split("\n")
+                        #get main function behavior score 
+                        input_str = 'ls\ntouch example.c\nls\nexit\n'
+                        answer_list = "PA1\nPA2\nPA3\nPA4\nstudentprogram\nPA1\nPA2\nPA3\nPA4\nexample.c\n".split("\n")
+                        main_score = compare_test(run_input(file_path, input_str), answer_list, 10)
+                        main.append(main_score)
+                        
+                        if(main_score == 0):
+                            student_error += ", issue with 'touch' and 'ls' functionality"
 
-                    stdout, stderr = run_input(file_path, input_str)
-                    directory_score = ( compare_test(stdout, stderr , answer_list, 2))
+                        #Command Function (auto pass)
+                        commands.append(20)
 
-                    #check if there is an error message 
-                    input_str = 'cd apple\nexit\n'
-                    stdout, stderr = run_input(file_path, input_str)
-                    output_list = str(stdout.decode()).lower()
-                 
 
-                    if not ("not found" in output_list or "chdir failed" in output_list):
-                        directories.append(directory_score - 2)
-                    else:
-                        if directory_score == 10:
-                            directories.append(directory_score)
+                        #get directories behavior score 
+                        input_str = 'cd PA1\nls\nexit\n'
+                        answer_list = "Submissions\nauto.py".split("\n")
+                        directory_score = compare_test(run_input(file_path, input_str), answer_list, 2)
+                       
+
+                        if(directory_score == 0):
+                            student_error += ", issue with 'cd' functionality"
+
+
+                        #check if there is an error message 
+                        input_str = 'cd apple\nexit\n'
+                        stdout = run_input(file_path, input_str)
+                       
+                        if stdout is not  None: 
+                            output_list = str(stdout.decode()).lower()
+
+                            # If it does not work 
+                            if not ("not found" in output_list or "chdir failed" in output_list):
+                                directories.append(max( (directory_score - 2) , 0))                                
+                                student_error += ", no error messsage for incorrect cd"
+
+                            else:
+                                directories.append(directory_score)
+
                         else:
-                            directories.append(2)
-                    
-                student_count += 1 
-             
-    print("Ran though [", student_count ,"] students...")      
-    write_results(students, formats, main, commands, directories)
+                            directories.append(max( (directory_score - 2) , 0)) 
+
+                        # Add comment for specfic student 
+                        comments.append(student_error)
+
+                        print("\n\n\n=============", student_count, ") ", Obtain_Student(file_path), "=============\n\n\n")
+
+                    student_count += 1 
+
+    print(student_count, " students")
+
+    # print("Ran though [", student_count ,"] students...")      
+    write_results(students, formats, main, commands, directories, comments)
                 
-def write_results(students, formats, main, commands, directories):
+def write_results(students, formats, main, commands, directories, comments):
     # writing results to csv file
     with open('file.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Studens', 'Formating', 'Main', 'Commands', 'Directories', 'Total Grade'])
+        writer.writerow(['Studens', 'Formating', 'Main', 'Commands', 'Directories', 'Total Grade', 'Comments'])
         for i in range(len(students)):
             grade = formats[i] + main[i] + commands[i] + directories[i]
-            writer.writerow([students[i], formats[i], main[i], commands[i], directories[i], grade])
+            writer.writerow([students[i], formats[i], main[i], commands[i], directories[i], grade, comments[i]])
 
 if __name__ == "__main__":
     main()
