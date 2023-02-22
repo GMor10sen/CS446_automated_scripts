@@ -116,7 +116,7 @@ def grade_student(outer_path):
         
                 if(student_count < 9000):
                     student_error = ''
-                    if(student_count != 23 and student_count != 34 and student_count != 54 and  student_count != 60):
+                    if(student_count != 23 and student_count != 34 and student_count != 54 and  student_count != 60 and student_count != 81 and student_count != 94 and student_count != 109):
 
                         students.append(Obtain_Student(file_path))
                         # get formatting score 
