@@ -5,10 +5,6 @@ import ast
 import csv
 import glob
 
-
-
-
-
 #main funciton for this autoscript which checks for a Submissions folder
 def main (): 
     path = "PA2/Submissions"
@@ -116,6 +112,23 @@ def Output(py_file, cmd):
     output = subprocess.run(cmd, stdout=subprocess.PIPE)
     return str(output.stdout.decode())
     
+def search_bash(file, words):
+    
+    everything_contained = False
+
+    with open(file, "r") as f:
+        file_contents = f.read()
+        
+        everything_contained = all(word in file_contents for word in words)
+        some_contained = any(word in file_contents for word in words)
+
+    if(everything_contained):
+        return 5
+    elif(some_contained):   
+        return 2.5
+    else:
+        return 0
+
 
 def grade_student(path):
     
@@ -138,62 +151,70 @@ def grade_student(path):
         if os.path.isdir(os.path.join(path, directory)):
             # Get a list of all .py files in the subdirectory
             py_files = glob.glob(os.path.join(path, directory, "*.py"))
+             # Get a list of all .sh files in the subdirectory
+            sh_files = glob.glob(os.path.join(path, directory, "*.sh"))
             # Print the student name and the name of each .py file
-            for py_file in py_files:
-            
-                #if(student_count < 2):
-                if(Obtain_Student(py_file) != "2012-Williams-Daniel" and Obtain_Student(py_file) != "Quijano-Vanessa" ):
-                    print("\nStudent:", Obtain_Student(py_file))
+            for student_file in py_files + sh_files:
+                if(student_count < 2):
+                    if(student_file.endswith(".sh")):
+                        bash_file = student_file
+                         #A bash script is successfully created and runs vmstat, top, and free and redirects their output to a txt file.
+                        Keywords = ["free", "top", "vmstat", "free.txt", "vmstat.txt", "top.txt"]
+                        search_bash(bash_file, Keywords)
+                        BashScript.append(0)
 
-                    order = ["Priority", "ShortestRemaining"]
-                    ans = ["3172", "17123"] 
-                    turn = ["65.25", "35.0"]
-                    wait = ["43.75", "13.5"]
+                    if(student_file.endswith(".py")):
+                        py_file = student_file
+                        #if(Obtain_Student(py_file) != "2012-Williams-Daniel" and Obtain_Student(py_file) != "Quijano-Vanessa" ):
+                        print("\nStudent:", Obtain_Student(py_file))
 
-                    for i in range (2):
-                        cmd = ["python3", py_file, os.path.join(path, directory, "pa2_batchfile.txt"), order[i]]
+                        order = ["RoundRobin", "ShortestRemaining"]
+                        ans = ["3172", "17123"] 
+                        turn = ["65.25", "35.0"]
+                        wait = ["43.75", "13.5"]
 
-                        #print the output for the students code 
-                        print(Output(py_file, cmd))
+                        for i in range (2):
+                            cmd = ["python3", py_file, os.path.join(path, directory, "pa2_batchfile.txt"), order[i]]
 
-                        #calculate points and get error messages 
-                        points, errors = ValuesOutput(py_file, cmd, ans[i], turn[i], wait[i])
-                        print(points, " | ", errors)
-                    
+                            #print the output for the students code 
+                            print(Output(py_file, cmd))
 
-                    #Program runs without errors (no bugs)
-                    ProgramRuns.append(0)
+                            #calculate points and get error messages 
+                            points, errors = ValuesOutput(py_file, cmd, ans[i], turn[i], wait[i])
+                            print(points, " | ", errors)
+                        
 
-                    #A python main function is implemented(2); 
-                    # all printing and reading is done from main (2),
-                    # and data is then passed to and from other functions (2);
-                    # logic to determine the correct algorithm to run is accurate (4)
-                    Main.append(0)
+                        #Program runs without errors (no bugs)
+                        ProgramRuns.append(0)
 
-                    # The averages are correctly calculated(4 pts), 
-                    # and individual turnaround times (for each process) are calculated (3 pts). 
-                    # The wait time for each process is accurately calculated (3 pts)
-                    CalcStats.append(0)
+                        #A python main function is implemented(2); 
+                        # all printing and reading is done from main (2),
+                        # and data is then passed to and from other functions (2);
+                        # logic to determine the correct algorithm to run is accurate (4)
+                        Main.append(0)
 
-                    # The function sorts each process by arrival time (2 pts) 
-                    # and then checks what processes are available at each time (3),
-                    # updates burst time when a process is interrupted(4),
-                    # and breaks arrival time ties correctly (by PID)(1)
-                    ShortestJob.append(0)
+                        # The averages are correctly calculated(4 pts), 
+                        # and individual turnaround times (for each process) are calculated (3 pts). 
+                        # The wait time for each process is accurately calculated (3 pts)
+                        CalcStats.append(0)
 
-                    # The function sorts each process by arrival time (2 pts) 
-                    # and then checks what processes are available (3),
-                    # and executes the process with the lowest pid in the queue (1 for example) 
-                    # for a full quanta (10 seconds) before executing the next(2).
-                    # The process is repeated until all processes have fully executed 
-                    # and the process run at each quanta is output to the screen (2)
-                    RoundRobinSort.append(0)
+                        # The function sorts each process by arrival time (2 pts) 
+                        # and then checks what processes are available at each time (3),
+                        # updates burst time when a process is interrupted(4),
+                        # and breaks arrival time ties correctly (by PID)(1)
+                        ShortestJob.append(0)
 
-                    #A bash script is successfully created and runs vmstat, top, and free and redirects their output to a txt file.
-                    BashScript.append(0)
+                        # The function sorts each process by arrival time (2 pts) 
+                        # and then checks what processes are available (3),
+                        # and executes the process with the lowest pid in the queue (1 for example) 
+                        # for a full quanta (10 seconds) before executing the next(2).
+                        # The process is repeated until all processes have fully executed 
+                        # and the process run at each quanta is output to the screen (2)
+                        RoundRobinSort.append(0)
 
-                    #There is no way to determine the .txt to my knowledge 
-                    Answers.append(0)
+                       
+                        #There is no way to determine the .txt to my knowledge 
+                        Answers.append(0)
 
                 student_count += 1 
 
