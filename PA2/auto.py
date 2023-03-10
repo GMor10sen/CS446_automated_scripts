@@ -172,32 +172,40 @@ def grade_student(path):
                                 if(num == act_num):
                                     if (i == 0):
                                         calc_points += 2
-                                        round_points += 10
+                                        # round_points += 10
                                     else:
                                         calc_points += 2
-                                        short_points += 10
+                                        # short_points += 10
 
                                 #student did not get calculation correct 
                                 else:
                                     if (i == 0):
-                                        round_points += 5
+                                        # round_points += 5
                                         calc_points += 1
+                                        errors += " round calculation error"
                                     else:
-                                        short_points += 5
+                                        # short_points += 5
                                         calc_points += 1
-                                    errors += "calculation error"
+                                        errors += " short calculation error"
 
                                 #correct timearound time calculation 
                                 if(turn_time == act_turn):
                                     calc_points += 1.5
+
                                 else:
-                                    errors += " turnaround time error"
+                                    if(i == 0):
+                                        errors += " round calculation time error"
+                                    if(i == 1):
+                                        errors += " short calculation time error"
 
                                 #correct wait time calculation 
                                 if (wait_time == act_wait):
                                     calc_points += 1.5
                                 else: 
-                                    errors += " wait time error"
+                                    if(i == 0):
+                                        errors += " round calculation wait error"
+                                    if(i == 1):
+                                        errors += " short calculation wait error"
     
                         #Program runs without errors (no bugs)
                         ProgramRuns.append(5)
@@ -218,7 +226,7 @@ def grade_student(path):
                         # and then checks what processes are available at each time (3),
                         # updates burst time when a process is interrupted(4),
                         # and breaks arrival time ties correctly (by PID)(1)
-                        RoundRobinSort.append(round_points)
+                        RoundRobinSort.append(10) #assumed correct 
 
                         # The function sorts each process by arrival time (2 pts) 
                         # and then checks what processes are available (3),
@@ -226,7 +234,8 @@ def grade_student(path):
                         # for a full quanta (10 seconds) before executing the next(2).
                         # The process is repeated until all processes have fully executed 
                         # and the process run at each quanta is output to the screen (2)
-                        ShortestJob.append(short_points)
+                        ShortestJob.append(10) #assumed correct 
+
                        
                         #There is no way to determine the .txt to my knowledge 
                         Answers.append(0)
@@ -257,7 +266,7 @@ def write_results(students, ProgramRuns, Main, CalcStats, ShortestJob, RoundRobi
 
     
     # writing results to csv file
-    with open('python.csv', 'w', newline='') as file:
+    with open('Updatedpython.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Studens', 'ProgramRuns', 'Main', 'CalcStats', 'ShortestJob', 'RoundRobinSort', 'Answers', 'Total Grade', 'Comments'])
         for i in range(len(students)):
@@ -268,7 +277,7 @@ def write_results(students, ProgramRuns, Main, CalcStats, ShortestJob, RoundRobi
 def bash_results(students, Bash):
      
     # writing results to csv file
-    with open('bash.csv', 'w', newline='') as file:
+    with open('Updatebash.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Student', 'Bash'])
         for i in range(len(students)):
