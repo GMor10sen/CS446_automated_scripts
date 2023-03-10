@@ -1,0 +1,9 @@
+1, 0, 20
+3, 0, 50
+7, 9, 4
+2, 10, 12
+self.arrival_dict: {1: 0, 3: 0, 7: 9, 2: 10}
+self.burst_dict: {1: 20, 3: 50, 7: 4, 2: 12}
+list length: 4
+arrival_dict length: 4
+burst_dict length: 4
